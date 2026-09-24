@@ -2,118 +2,16 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Maximize2, Sparkles, Github, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { usePortfolio } from '../context/PortfolioContext';
 import { TRANSLATIONS } from '../translations';
+import { PrototypeItem } from '../types';
 
-export interface ExplorationItem {
-  id: string;
-  title: string;
-  titleAr: string;
-  image: string;
-  medium: string;
-  mediumAr: string;
-  category: 'shader' | '3d' | 'generative';
-  desc: string;
-  descAr: string;
-  rotation?: string;
-  githubUrl?: string;
-  demoUrl?: string;
-}
+export type ExplorationItem = PrototypeItem;
 
-export const EXPLORATIONS: ExplorationItem[] = [
-  {
-    id: 'exp-1',
-    title: 'Iridescent Kinetic Fluid',
-    titleAr: 'محاكاة السوائل الحركية المتلألئة',
-    image:
-      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=85',
-    medium: 'GLSL / WebGL Shader',
-    mediumAr: 'شيدرز برمجية GLSL / WebGL',
-    category: 'shader',
-    desc: 'Real-time GLSL fluid refraction and dynamic kinetic light physics.',
-    descAr: 'محاكاة برمجية حية لانكسار الضوء وتفاعل حركة السوائل في الوقت الحقيقي.',
-    rotation: '-rotate-2',
-    githubUrl: 'https://github.com/abualss3ud',
-    demoUrl: 'https://github.com/abualss3ud',
-  },
-  {
-    id: 'exp-2',
-    title: 'Chromatic Glass Prism',
-    titleAr: 'منشور زجاجي لوني وتشتت الضوء',
-    image:
-      'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1000&q=85',
-    medium: 'Cinema 4D / Octane',
-    mediumAr: 'تصيير واقعي Cinema 4D',
-    category: '3d',
-    desc: 'High-index caustics, optical dispersion and procedural glass shaders.',
-    descAr: 'انعكاسات زجاجية واقعية مع دراسة زوايا الإضاءة والتشتت اللوني للأجسام.',
-    rotation: 'rotate-2',
-    githubUrl: 'https://github.com/abualss3ud',
-    demoUrl: 'https://github.com/abualss3ud',
-  },
-  {
-    id: 'exp-3',
-    title: 'Cybernetic Monolith',
-    titleAr: 'النصب التذكاري السيبراني',
-    image:
-      'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1000&q=85',
-    medium: 'Houdini / Procedural',
-    mediumAr: 'هندسة إجرائية Houdini',
-    category: '3d',
-    desc: 'Procedural tessellation and architectural micro-geometry exploration.',
-    descAr: 'نمذجة إجرائية لأنماط هندسية معقدة وتراكيب مستقبلية دقيقة.',
-    rotation: '-rotate-1',
-    githubUrl: 'https://github.com/abualss3ud',
-    demoUrl: 'https://github.com/abualss3ud',
-  },
-  {
-    id: 'exp-4',
-    title: 'Luminous Spectral Waves',
-    titleAr: 'أمواج طيفية وموجات ضوئية',
-    image:
-      'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=1000&q=85',
-    medium: 'Compute Shaders / Math',
-    mediumAr: 'شيدرز الحوسبة الرياضية',
-    category: 'shader',
-    desc: 'Mathematical wave superposition driving particle displacements.',
-    descAr: 'محاكاة موجات طيفية مضيئة عبر معادلات رياضية وتراكب الجزيئات التفاعلية.',
-    rotation: 'rotate-2',
-    githubUrl: 'https://github.com/abualss3ud',
-    demoUrl: 'https://github.com/abualss3ud',
-  },
-  {
-    id: 'exp-5',
-    title: 'Monochrome Topography',
-    titleAr: 'تضاريس ثلاثية الأبعاد أحادية اللون',
-    image:
-      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=1000&q=85',
-    medium: 'Blender Geometry Nodes',
-    mediumAr: 'عقد بلندر الهندسية Geometry Nodes',
-    category: '3d',
-    desc: 'Parametric elevation meshes with dynamic lighting heightmaps.',
-    descAr: 'شبكة تضاريس متدرجة الارتفاع باستخدام Blender ونظم النحت الرقمي.',
-    rotation: '-rotate-2',
-    githubUrl: 'https://github.com/abualss3ud',
-    demoUrl: 'https://github.com/abualss3ud',
-  },
-  {
-    id: 'exp-6',
-    title: 'Spatial Orbital Grid',
-    titleAr: 'شبكة مدارية فراغية وتوليدية',
-    image:
-      'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=85',
-    medium: 'Generative Typography',
-    mediumAr: 'تايبوغرافي تفاعلي توليدي',
-    category: 'generative',
-    desc: 'Reactive glyph layouts and responsive 3D typography transforms.',
-    descAr: 'حركة خطوط ونصوص ديناميكية تتفاعل مع الفأرة والمساحة الفراغية.',
-    rotation: 'rotate-1',
-    githubUrl: 'https://github.com/abualss3ud',
-    demoUrl: 'https://github.com/abualss3ud',
-  },
-];
+export { initialPrototypes as EXPLORATIONS } from '../data/initialData';
 
 interface ExplorationsProps {
-  onOpenLightbox: (item: ExplorationItem) => void;
+  onOpenLightbox: (item: any) => void;
   embedded?: boolean;
 }
 
@@ -122,19 +20,24 @@ export const Explorations: React.FC<ExplorationsProps> = ({
   embedded = false,
 }) => {
   const { language } = useLanguage();
+  const { prototypes } = usePortfolio();
   const isAr = language === 'ar';
   const t = TRANSLATIONS[language].explorations;
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'shader' | '3d' | 'generative'>('all');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
 
   const filterTabs = [
     { id: 'all', label: isAr ? 'جميع التجارب' : 'All Experiments' },
     { id: 'shader', label: isAr ? 'الشيدرز والويب GLSL' : 'Shaders & WebGL' },
     { id: '3d', label: isAr ? 'العوالم ثلاثية الأبعاد' : '3D & Procedural' },
     { id: 'generative', label: isAr ? 'التصاميم التوليدية' : 'Generative' },
+    { id: 'frontend', label: isAr ? 'واجهات وتجارب UI' : 'Front-End UI' },
+    { id: 'interactive', label: isAr ? 'نماذج تفاعلية' : 'Interactive Labs' },
   ];
 
-  const filteredItems = EXPLORATIONS.filter(
+  const publishedPrototypes = prototypes.filter((p) => (p.status || 'published') === 'published');
+
+  const filteredItems = publishedPrototypes.filter(
     (item) => activeFilter === 'all' || item.category === activeFilter
   );
 
@@ -219,9 +122,9 @@ export const Explorations: React.FC<ExplorationsProps> = ({
       >
         <AnimatePresence>
           {filteredItems.map((item, index) => {
-            const displayTitle = isAr ? item.titleAr : item.title;
-            const displayMedium = isAr ? item.mediumAr : item.medium;
-            const displayDesc = isAr ? item.descAr : item.desc;
+            const displayTitle = (isAr ? item.titleAr : item.titleEn) || item.title;
+            const displayMedium = (isAr ? item.mediumAr : item.mediumEn) || item.medium;
+            const displayDesc = (isAr ? item.descAr : item.descEn) || item.desc;
 
             return (
               <motion.div

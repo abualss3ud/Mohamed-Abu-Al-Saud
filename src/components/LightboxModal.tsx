@@ -31,13 +31,17 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose }) =
     };
   }, [item, onClose]);
 
+  const displayTitle = (isAr ? item?.titleAr : item?.titleEn) || item?.title || '';
+  const displayMedium = (isAr ? item?.mediumAr : item?.mediumEn) || item?.medium || '';
+  const displayDesc = (isAr ? item?.descAr : item?.descEn) || item?.desc || '';
+
   return (
     <AnimatePresence>
       {item && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={isAr && item.titleAr ? item.titleAr : item.title}
+          aria-label={displayTitle}
           onClick={onClose}
           className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 md:p-10 overflow-y-auto cursor-zoom-out"
         >
@@ -79,7 +83,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose }) =
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-[#89AACC] shrink-0" />
                 <span className="text-xs font-mono text-muted uppercase tracking-wider truncate">
-                  {isAr && item.mediumAr ? item.mediumAr : item.medium}
+                  {displayMedium}
                 </span>
               </div>
 
@@ -97,7 +101,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose }) =
             <div className="relative w-full max-h-[50vh] min-h-[240px] bg-black/80 flex items-center justify-center overflow-hidden">
               <img
                 src={item.image}
-                alt={isAr && item.titleAr ? item.titleAr : item.title}
+                alt={displayTitle}
                 className="w-full h-full max-h-[50vh] object-contain sm:object-cover"
               />
             </div>
@@ -106,11 +110,11 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ item, onClose }) =
             <div className="p-5 sm:p-6 bg-surface border-t border-stroke flex flex-col gap-4 shrink-0">
               <div>
                 <h3 className="text-lg sm:text-xl font-display italic text-text-primary">
-                  {isAr && item.titleAr ? item.titleAr : item.title}
+                  {displayTitle}
                 </h3>
-                {(item.desc || item.descAr) && (
+                {displayDesc && (
                   <p className="text-xs sm:text-sm text-muted mt-1.5 leading-relaxed">
-                    {isAr && item.descAr ? item.descAr : item.desc}
+                    {displayDesc}
                   </p>
                 )}
               </div>

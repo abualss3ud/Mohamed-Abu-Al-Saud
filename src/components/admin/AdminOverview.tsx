@@ -109,6 +109,14 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ onSelectTab }) => 
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0">
           <button
+            onClick={() => onSelectTab('prototypes')}
+            className="px-4 py-2.5 rounded-full bg-surface hover:bg-stroke/60 border border-stroke text-text-primary text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-[#89AACC]" />
+            <span>{isAr ? 'النماذج التفاعلية' : 'Prototypes'}</span>
+          </button>
+
+          <button
             onClick={() => onSelectTab('invoices')}
             className="px-4 py-2.5 rounded-full bg-text-primary text-bg hover:bg-white text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
           >

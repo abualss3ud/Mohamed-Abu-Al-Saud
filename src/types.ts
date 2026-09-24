@@ -5,6 +5,7 @@ export type AdminTab =
   | 'projects'
   | 'case-studies'
   | 'services'
+  | 'prototypes'
   | 'invoices'
   | 'messages'
   | 'testimonials'
@@ -264,3 +265,28 @@ export interface ToastMessage {
   type: 'success' | 'warning' | 'destructive' | 'info';
   message: string;
 }
+
+export type PrototypeCategory = 'shader' | '3d' | 'generative' | 'frontend' | 'interactive' | string;
+
+export interface PrototypeItem {
+  id: string;
+  title: string;
+  titleAr?: string;
+  titleEn?: string;
+  image: string;
+  medium: string;
+  mediumAr?: string;
+  mediumEn?: string;
+  category: 'shader' | '3d' | 'generative' | 'frontend' | 'interactive' | string;
+  desc: string;
+  descAr?: string;
+  descEn?: string;
+  rotation?: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  featured?: boolean;
+  status?: 'published' | 'draft';
+  order?: number;
+  updatedAt?: string;
+}
+

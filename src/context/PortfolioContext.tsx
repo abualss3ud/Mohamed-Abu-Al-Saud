@@ -12,6 +12,7 @@ import {
   ToastMessage,
   AdminTab,
   Invoice,
+  PrototypeItem,
 } from '../types';
 import {
   initialProjects,
@@ -23,6 +24,7 @@ import {
   initialMediaItems,
   initialSettings,
   initialInvoices,
+  initialPrototypes,
 } from '../data/initialData';
 import { translations } from '../data/translations';
 
@@ -36,6 +38,8 @@ interface PortfolioContextType {
   setCaseStudies: React.Dispatch<React.SetStateAction<Record<string, CaseStudy>>>;
   services: Service[];
   setServices: React.Dispatch<React.SetStateAction<Service[]>>;
+  prototypes: PrototypeItem[];
+  setPrototypes: React.Dispatch<React.SetStateAction<PrototypeItem[]>>;
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   articles: Article[];
@@ -63,6 +67,9 @@ interface PortfolioContextType {
   updateMessageStatus: (id: string, status: Message['status']) => void;
   saveProject: (project: Project) => void;
   deleteProject: (id: string) => void;
+  savePrototype: (prototype: PrototypeItem) => void;
+  deletePrototype: (id: string) => void;
+  updatePrototypeStatus: (id: string, status: 'published' | 'draft') => void;
   saveArticle: (article: Article) => void;
   deleteArticle: (id: string) => void;
   saveInvoice: (invoice: Invoice) => void;
@@ -119,6 +126,15 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return saved ? JSON.parse(saved) : initialServices;
     } catch {
       return initialServices;
+    }
+  });
+
+  const [prototypes, setPrototypes] = useState<PrototypeItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('portfolio_prototypes_v1');
+      return saved ? JSON.parse(saved) : initialPrototypes;
+    } catch {
+      return initialPrototypes;
     }
   });
 
@@ -241,6 +257,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     try {
+      localStorage.setItem('portfolio_prototypes_v1', JSON.stringify(prototypes));
+    } catch {}
+  }, [prototypes]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem('portfolio_messages', JSON.stringify(messages));
     } catch {}
   }, [messages]);
@@ -326,6 +348,28 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     showToast('Project removed', 'info');
   };
 
+  const savePrototype = (prototype: PrototypeItem) => {
+    setPrototypes((prev) => {
+      const exists = prev.some((p) => p.id === prototype.id);
+      if (exists) {
+        return prev.map((p) => (p.id === prototype.id ? { ...prototype, updatedAt: new Date().toISOString().split('T')[0] } : p));
+      }
+      return [{ ...prototype, updatedAt: new Date().toISOString().split('T')[0] }, ...prev];
+    });
+    showToast('Prototype saved successfully', 'success');
+  };
+
+  const deletePrototype = (id: string) => {
+    setPrototypes((prev) => prev.filter((p) => p.id !== id));
+    showToast('Prototype removed', 'info');
+  };
+
+  const updatePrototypeStatus = (id: string, status: 'published' | 'draft') => {
+    setPrototypes((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status, updatedAt: new Date().toISOString().split('T')[0] } : p))
+    );
+  };
+
   const saveArticle = (article: Article) => {
     setArticles((prev) => {
       const exists = prev.some((a) => a.id === article.id);
@@ -383,6 +427,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setCaseStudies,
         services,
         setServices,
+        prototypes,
+        setPrototypes,
         messages,
         setMessages,
         articles,
@@ -410,6 +456,9 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateMessageStatus,
         saveProject,
         deleteProject,
+        savePrototype,
+        deletePrototype,
+        updatePrototypeStatus,
         saveArticle,
         deleteArticle,
         saveInvoice,

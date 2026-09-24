@@ -29,6 +29,7 @@ import { AdminTab } from '../../types';
 import { AdminOverview } from './AdminOverview';
 import { AdminProjects } from './AdminProjects';
 import { AdminServices } from './AdminServices';
+import { AdminPrototypes } from './AdminPrototypes';
 import { AdminInvoices } from './AdminInvoices';
 import { AdminMessages } from './AdminMessages';
 import { AdminBlog } from './AdminBlog';
@@ -61,6 +62,7 @@ export const AdminDashboard: React.FC = () => {
         'overview',
         'projects',
         'services',
+        'prototypes',
         'invoices',
         'blog',
         'messages',
@@ -94,6 +96,12 @@ export const AdminDashboard: React.FC = () => {
       labelAr: 'الخدمات البرمجية',
       labelEn: 'Services & Scope',
       icon: <Layers className="w-4 h-4" />,
+    },
+    {
+      id: 'prototypes',
+      labelAr: 'المعرض والنماذج التفاعلية',
+      labelEn: 'Showcase & Prototypes',
+      icon: <Sparkles className="w-4 h-4" />,
     },
     {
       id: 'invoices',
@@ -355,6 +363,7 @@ export const AdminDashboard: React.FC = () => {
           {adminTab === 'overview' && <AdminOverview onSelectTab={handleTabClick} />}
           {adminTab === 'projects' && <AdminProjects />}
           {adminTab === 'services' && <AdminServices />}
+          {adminTab === 'prototypes' && <AdminPrototypes />}
           {adminTab === 'invoices' && <AdminInvoices />}
           {adminTab === 'blog' && <AdminBlog />}
           {adminTab === 'messages' && <AdminMessages />}
