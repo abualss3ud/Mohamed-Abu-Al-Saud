@@ -22,7 +22,9 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigation } from '../context/NavigationContext';
+import { usePortfolio } from '../context/PortfolioContext';
 import { TRANSLATIONS } from '../translations';
+import { CodeBlock } from '../components/CodeBlock';
 
 interface Comment {
   id: string;
@@ -318,9 +320,12 @@ export const ArticleDetailPage: React.FC = () => {
 
   // Find target article
   const articleId = activeEntityId || 'fullstack-architecture';
+  const { articles, comments, addArticleComment, likeComment } = usePortfolio();
+  const matchedArticle = articles.find((a) => a.id === articleId || a.slug === articleId);
+
   const articleIndex = tJournal.entries.findIndex((e) => e.id === articleId);
   const articleMeta = tJournal.entries[articleIndex !== -1 ? articleIndex : 0];
-  const articleImage = ARTICLE_IMAGES[articleMeta.id] || ARTICLE_IMAGES['fullstack-architecture'];
+  const articleImage = matchedArticle?.coverImage || ARTICLE_IMAGES[articleMeta.id] || ARTICLE_IMAGES['fullstack-architecture'];
   const articleContent = ARTICLE_CONTENTS[articleMeta.id] || ARTICLE_CONTENTS['fullstack-architecture'];
 
   // Previous & Next articles
@@ -335,26 +340,15 @@ export const ArticleDetailPage: React.FC = () => {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
-  // Comments state with localStorage persistence
-  const [comments, setComments] = useState<Comment[]>(() => {
-    try {
-      const saved = localStorage.getItem(`article_comments_${articleMeta.id}`);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return DEFAULT_COMMENTS;
-  });
-
+  // Comments state
   const [authorName, setAuthorName] = useState('');
   const [authorEmail, setAuthorEmail] = useState('');
   const [commentText, setCommentText] = useState('');
   const [commentSubmitted, setCommentSubmitted] = useState(false);
 
-  // Save comments on change
-  useEffect(() => {
-    try {
-      localStorage.setItem(`article_comments_${articleMeta.id}`, JSON.stringify(comments));
-    } catch {}
-  }, [comments, articleMeta.id]);
+  const currentArticleComments = comments.filter(
+    (c) => (c.articleId === articleId || c.articleId === articleMeta.id) && c.status === 'approved'
+  );
 
   const handleCopyLink = () => {
     navigator.clipboard?.writeText(window.location.href);
@@ -395,38 +389,21 @@ export const ArticleDetailPage: React.FC = () => {
     e.preventDefault();
     if (!authorName.trim() || !commentText.trim()) return;
 
-    const bgColors = ['bg-blue-600', 'bg-indigo-600', 'bg-emerald-600', 'bg-purple-600', 'bg-amber-600'];
-    const randomBg = bgColors[Math.floor(Math.random() * bgColors.length)];
-
-    const newComment: Comment = {
-      id: `c-${Date.now()}`,
-      author: authorName.trim(),
-      avatarBg: randomBg,
-      date: isAr ? 'الآن' : 'Just now',
+    addArticleComment({
+      articleId: articleMeta.id || articleId,
+      articleTitle: articleMeta.title,
+      authorName: authorName.trim(),
+      authorEmail: authorEmail.trim(),
       content: commentText.trim(),
-      likes: 0,
-    };
+    });
 
-    setComments([newComment, ...comments]);
     setCommentText('');
     setCommentSubmitted(true);
-    setTimeout(() => setCommentSubmitted(false), 3000);
+    setTimeout(() => setCommentSubmitted(false), 3500);
   };
 
   const handleLikeComment = (commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id === commentId) {
-          const hasLiked = c.hasLiked;
-          return {
-            ...c,
-            likes: hasLiked ? c.likes - 1 : c.likes + 1,
-            hasLiked: !hasLiked,
-          };
-        }
-        return c;
-      })
-    );
+    likeComment(commentId);
   };
 
   const content = isAr ? articleContent.ar : articleContent.en;
@@ -561,21 +538,33 @@ export const ArticleDetailPage: React.FC = () => {
 
               {/* Optional Code Snippet */}
               {section.code && (
-                <div className="rounded-2xl bg-black/70 border border-stroke/80 overflow-hidden my-6 shadow-xl">
-                  <div className="px-4 py-2 bg-surface/90 border-b border-stroke flex items-center justify-between text-xs font-mono text-muted">
-                    <span className="flex items-center gap-2">
-                      <Code2 className="w-3.5 h-3.5 text-[#89AACC]" />
-                      Code Architecture
-                    </span>
-                    <span>TypeScript</span>
-                  </div>
-                  <pre className="p-4 sm:p-5 text-xs sm:text-sm font-mono text-emerald-400 overflow-x-auto leading-relaxed">
-                    <code>{section.code}</code>
-                  </pre>
-                </div>
+                <CodeBlock
+                  code={section.code}
+                  language="typescript"
+                  title="Code Architecture & Implementation"
+                />
               )}
             </div>
           ))}
+
+          {/* Dynamic Article Code Snippets */}
+          {matchedArticle?.codeSnippets && matchedArticle.codeSnippets.length > 0 && (
+            <div className="space-y-6 pt-6 border-t border-stroke/40">
+              <h3 className="text-lg font-bold text-text-primary font-mono flex items-center gap-2">
+                <Code2 className="w-4 h-4 text-[#89AACC]" />
+                <span>{isAr ? 'الأكواد والمقتطفات البرمجية المصاحبة' : 'Code Snippets & Examples'}</span>
+              </h3>
+              {matchedArticle.codeSnippets.map((snippet) => (
+                <CodeBlock
+                  key={snippet.id}
+                  code={snippet.code}
+                  language={snippet.language}
+                  title={snippet.title}
+                  explanation={isAr ? snippet.explanationAr || snippet.explanation : snippet.explanationEn || snippet.explanation}
+                />
+              ))}
+            </div>
+          )}
         </article>
 
         {/* Share Article Section */}
@@ -692,7 +681,7 @@ export const ArticleDetailPage: React.FC = () => {
                 {isAr ? 'التعليقات والمناقشات' : 'Discussion & Comments'}
               </h3>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-surface border border-stroke text-muted">
-                {comments.length}
+                {currentArticleComments.length}
               </span>
             </div>
           </div>
@@ -755,42 +744,62 @@ export const ArticleDetailPage: React.FC = () => {
 
           {/* Comments List */}
           <div className="space-y-4">
-            {comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="p-5 sm:p-6 rounded-2xl bg-surface/60 border border-stroke hover:border-stroke/80 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-9 h-9 rounded-full ${comment.avatarBg} text-white flex items-center justify-center text-xs font-bold shrink-0`}
+            {currentArticleComments.length === 0 ? (
+              <div className="p-8 text-center rounded-2xl bg-surface/40 border border-stroke text-muted text-xs font-mono">
+                {isAr ? 'لا توجد تعليقات بعد. كن أول من يشارك في هذه المناقشة!' : 'No comments yet. Be the first to start the conversation!'}
+              </div>
+            ) : (
+              currentArticleComments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="p-5 sm:p-6 rounded-2xl bg-surface/60 border border-stroke hover:border-stroke/80 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2.5">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-9 h-9 rounded-full ${comment.authorAvatarBg || 'bg-[#4E85BF]'} text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-sm`}
+                      >
+                        {comment.authorName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-text-primary">{comment.authorName}</div>
+                        <div className="text-[11px] text-muted font-mono">{comment.createdAt}</div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleLikeComment(comment.id)}
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono transition-colors cursor-pointer border bg-surface border-stroke text-muted hover:text-text-primary hover:border-[#89AACC]/40"
                     >
-                      {comment.author.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-text-primary">{comment.author}</div>
-                      <div className="text-[11px] text-muted font-mono">{comment.date}</div>
-                    </div>
+                      <ThumbsUp className="w-3 h-3 text-[#89AACC]" />
+                      <span>{comment.likes || 0}</span>
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => handleLikeComment(comment.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono transition-colors cursor-pointer border ${
-                      comment.hasLiked
-                        ? 'bg-[#89AACC]/20 border-[#89AACC]/50 text-white'
-                        : 'bg-surface border-stroke text-muted hover:text-text-primary'
-                    }`}
-                  >
-                    <ThumbsUp className="w-3 h-3" />
-                    <span>{comment.likes}</span>
-                  </button>
-                </div>
+                  <p className="text-sm text-muted/90 leading-relaxed pl-12 rtl:pl-0 rtl:pr-12">
+                    {comment.content}
+                  </p>
 
-                <p className="text-sm text-muted/90 leading-relaxed pl-12 rtl:pl-0 rtl:pr-12">
-                  {comment.content}
-                </p>
-              </div>
-            ))}
+                  {/* Author / Developer Reply */}
+                  {comment.reply && (
+                    <div className="mt-4 p-4 rounded-2xl bg-[#89AACC]/10 border border-[#89AACC]/30 ml-8 rtl:ml-0 rtl:mr-8 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="text-xs font-mono font-bold text-[#89AACC]">
+                            {isAr ? 'رد المطور (محمد أبو السعود)' : 'Author Reply (Mohamed Abu Al-Saud)'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-muted">{comment.replyDate}</span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-text-primary leading-relaxed font-normal">
+                        {comment.reply}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </section>
 

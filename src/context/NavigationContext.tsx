@@ -35,6 +35,13 @@ const KNOWN_ROUTES = ['admin', 'blog', 'journal', 'projects', 'work', 'services'
 
 export function getBasePath(): string {
   if (typeof window === 'undefined') return '';
+
+  // Prefer Vite's configured BASE_URL if available
+  const metaBase = import.meta.env.BASE_URL ? import.meta.env.BASE_URL.replace(/\/+$/, '') : '';
+  if (metaBase && metaBase !== '/') {
+    return metaBase;
+  }
+
   const path = window.location.pathname.replace(/\/+$/, '');
   const segments = path.split('/').filter(Boolean);
   

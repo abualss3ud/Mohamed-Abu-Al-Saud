@@ -13,6 +13,7 @@ import {
   AdminTab,
   Invoice,
   PrototypeItem,
+  ArticleComment,
 } from '../types';
 import {
   initialProjects,
@@ -25,6 +26,7 @@ import {
   initialSettings,
   initialInvoices,
   initialPrototypes,
+  initialComments,
 } from '../data/initialData';
 import { translations } from '../data/translations';
 
@@ -44,6 +46,8 @@ interface PortfolioContextType {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   articles: Article[];
   setArticles: React.Dispatch<React.SetStateAction<Article[]>>;
+  comments: ArticleComment[];
+  setComments: React.Dispatch<React.SetStateAction<ArticleComment[]>>;
   testimonials: Testimonial[];
   setTestimonials: React.Dispatch<React.SetStateAction<Testimonial[]>>;
   invoices: Invoice[];
@@ -72,6 +76,12 @@ interface PortfolioContextType {
   updatePrototypeStatus: (id: string, status: 'published' | 'draft') => void;
   saveArticle: (article: Article) => void;
   deleteArticle: (id: string) => void;
+  addArticleComment: (comment: Omit<ArticleComment, 'id' | 'createdAt' | 'status' | 'isReadByAdmin' | 'likes'>) => void;
+  replyToArticleComment: (commentId: string, replyText: string) => void;
+  updateCommentStatus: (commentId: string, status: ArticleComment['status']) => void;
+  deleteArticleComment: (commentId: string) => void;
+  markCommentsAsRead: () => void;
+  likeComment: (commentId: string) => void;
   saveInvoice: (invoice: Invoice) => void;
   deleteInvoice: (id: string) => void;
   updateInvoiceStatus: (id: string, status: Invoice['status']) => void;
@@ -153,6 +163,15 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return saved ? JSON.parse(saved) : initialArticles;
     } catch {
       return initialArticles;
+    }
+  });
+
+  const [comments, setComments] = useState<ArticleComment[]>(() => {
+    try {
+      const saved = localStorage.getItem('portfolio_article_comments');
+      return saved ? JSON.parse(saved) : initialComments;
+    } catch {
+      return initialComments;
     }
   });
 
@@ -275,6 +294,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     try {
+      localStorage.setItem('portfolio_article_comments', JSON.stringify(comments));
+    } catch {}
+  }, [comments]);
+
+  useEffect(() => {
+    try {
       localStorage.setItem('portfolio_invoices', JSON.stringify(invoices));
     } catch {}
   }, [invoices]);
@@ -386,6 +411,74 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     showToast('Article removed', 'info');
   };
 
+  const addArticleComment = (inquiry: Omit<ArticleComment, 'id' | 'createdAt' | 'status' | 'isReadByAdmin' | 'likes'>) => {
+    const bgColors = ['bg-[#4E85BF]', 'bg-purple-600', 'bg-emerald-600', 'bg-amber-600', 'bg-rose-600', 'bg-indigo-600'];
+    const randomBg = bgColors[Math.floor(Math.random() * bgColors.length)];
+
+    const newComment: ArticleComment = {
+      ...inquiry,
+      id: `cmt-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0],
+      status: 'approved',
+      authorAvatarBg: inquiry.authorAvatarBg || randomBg,
+      likes: 0,
+      isReadByAdmin: false,
+    };
+
+    setComments((prev) => [newComment, ...prev]);
+    showToast(
+      language === 'ar' ? 'تمت إضافة تعليقك بنجاح للمناقشة' : 'Your comment was posted for discussion',
+      'success'
+    );
+  };
+
+  const replyToArticleComment = (commentId: string, replyText: string) => {
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? {
+              ...c,
+              reply: replyText,
+              replyDate: new Date().toISOString().split('T')[0],
+              isReadByAdmin: true,
+            }
+          : c
+      )
+    );
+    showToast(
+      language === 'ar' ? 'تم حفظ وإرسال رد المطور على التعليق' : 'Author reply sent successfully',
+      'success'
+    );
+  };
+
+  const updateCommentStatus = (commentId: string, status: ArticleComment['status']) => {
+    setComments((prev) =>
+      prev.map((c) => (c.id === commentId ? { ...c, status, isReadByAdmin: true } : c))
+    );
+    showToast(
+      language === 'ar' ? 'تم تحديث حالة التعليق' : 'Comment status updated',
+      'info'
+    );
+  };
+
+  const deleteArticleComment = (commentId: string) => {
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    showToast(
+      language === 'ar' ? 'تم حذف التعليق' : 'Comment removed',
+      'info'
+    );
+  };
+
+  const markCommentsAsRead = () => {
+    setComments((prev) => prev.map((c) => ({ ...c, isReadByAdmin: true })));
+  };
+
+  const likeComment = (commentId: string) => {
+    setComments((prev) =>
+      prev.map((c) => (c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c))
+    );
+  };
+
   const saveInvoice = (invoice: Invoice) => {
     setInvoices((prev) => {
       const exists = prev.some((inv) => inv.id === invoice.id);
@@ -433,6 +526,8 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setMessages,
         articles,
         setArticles,
+        comments,
+        setComments,
         testimonials,
         setTestimonials,
         invoices,
@@ -461,6 +556,12 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updatePrototypeStatus,
         saveArticle,
         deleteArticle,
+        addArticleComment,
+        replyToArticleComment,
+        updateCommentStatus,
+        deleteArticleComment,
+        markCommentsAsRead,
+        likeComment,
         saveInvoice,
         deleteInvoice,
         updateInvoiceStatus,

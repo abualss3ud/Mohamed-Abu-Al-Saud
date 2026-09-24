@@ -13,10 +13,10 @@ const isProd = process.env.NODE_ENV === 'production';
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Default Admin configuration
+// Admin configuration from environment variables
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'abualss3ud@gmail.com').toLowerCase().trim();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@2026!';
-const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'abu-alsaud-super-secret-secure-admin-session-key-2026';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 
 // Active Session Tokens Store (in memory with timestamps)
 const activeSessions = new Map<string, { email: string; expiresAt: number; createdAt: number }>();
@@ -73,6 +73,10 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    if (!ADMIN_PASSWORD) {
+      return res.status(500).json({ error: 'ADMIN_PASSWORD environment variable is not configured on server' });
+    }
 
     if (cleanEmail !== ADMIN_EMAIL) {
       return res.status(401).json({ error: 'Invalid admin credentials' });

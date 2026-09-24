@@ -181,6 +181,32 @@ export interface Message {
   status: MessageStatus;
 }
 
+export interface CodeSnippet {
+  id: string;
+  language: string; // 'typescript' | 'javascript' | 'react' | 'sql' | 'python' | 'css' | 'html' | 'bash'
+  title?: string;
+  code: string;
+  explanation?: string;
+  explanationAr?: string;
+  explanationEn?: string;
+}
+
+export interface ArticleComment {
+  id: string;
+  articleId: string;
+  articleTitle?: string;
+  authorName: string;
+  authorEmail?: string;
+  authorAvatarBg?: string;
+  content: string;
+  createdAt: string;
+  status: 'pending' | 'approved' | 'rejected';
+  likes?: number;
+  reply?: string;
+  replyDate?: string;
+  isReadByAdmin?: boolean;
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -202,6 +228,10 @@ export interface Article {
   tagsEn?: string[];
   publishedDate: string;
   status: ArticleStatus;
+  codeSnippets?: CodeSnippet[];
+  readTime?: string;
+  readTimeAr?: string;
+  readTimeEn?: string;
 }
 
 export interface Testimonial {

@@ -14,16 +14,39 @@ import {
   FileText,
   Sparkles,
   Languages,
+  MessageSquare,
+  Code2,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Bell,
+  ThumbsUp,
 } from 'lucide-react';
 import { usePortfolio } from '../../context/PortfolioContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Article } from '../../types';
+import { Article, CodeSnippet, ArticleComment } from '../../types';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 export const AdminBlog: React.FC = () => {
-  const { articles, saveArticle, deleteArticle, showToast } = usePortfolio();
+  const {
+    articles,
+    saveArticle,
+    deleteArticle,
+    comments,
+    replyToArticleComment,
+    updateCommentStatus,
+    deleteArticleComment,
+    markCommentsAsRead,
+    showToast,
+  } = usePortfolio();
   const { language } = useLanguage();
   const isAr = language === 'ar';
+
+  const [activeTab, setActiveTab] = useState<'articles' | 'comments'>('articles');
+  const [commentSearch, setCommentSearch] = useState('');
+  const [commentFilterStatus, setCommentFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -32,7 +55,8 @@ export const AdminBlog: React.FC = () => {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
-  const [formTab, setFormTab] = useState<'ar' | 'en' | 'meta'>('ar');
+  const [commentToDelete, setCommentToDelete] = useState<ArticleComment | null>(null);
+  const [formTab, setFormTab] = useState<'ar' | 'en' | 'code' | 'meta'>('ar');
 
   const emptyArticle: Article = {
     id: `art-${Date.now()}`,
@@ -203,10 +227,70 @@ export const AdminBlog: React.FC = () => {
     }
   };
 
+  const unreadCommentsCount = comments.filter((c) => !c.isReadByAdmin).length;
+
+  const filteredComments = comments.filter((comment) => {
+    const q = commentSearch.toLowerCase();
+    const matchesSearch =
+      comment.authorName.toLowerCase().includes(q) ||
+      (comment.authorEmail || '').toLowerCase().includes(q) ||
+      (comment.articleTitle || '').toLowerCase().includes(q) ||
+      comment.content.toLowerCase().includes(q);
+
+    const matchesStatus =
+      commentFilterStatus === 'all' || comment.status === commentFilterStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleSendReply = (commentId: string) => {
+    if (!replyText.trim()) return;
+    replyToArticleComment(commentId, replyText.trim());
+    setReplyText('');
+    setActiveReplyId(null);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-surface border border-stroke shadow-sm">
+      {/* Top Main Navigation Tabs: Articles vs Comments */}
+      <div className="flex items-center gap-2 p-1.5 bg-surface border border-stroke rounded-2xl max-w-md shadow-sm">
+        <button
+          onClick={() => setActiveTab('articles')}
+          className={`flex-1 py-2 px-4 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            activeTab === 'articles'
+              ? 'bg-text-primary text-bg font-bold shadow'
+              : 'text-muted hover:text-text-primary'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>{isAr ? 'إدارة المقالات' : 'Manage Articles'}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveTab('comments');
+            markCommentsAsRead();
+          }}
+          className={`flex-1 py-2 px-4 rounded-xl text-xs font-semibold font-mono transition-all cursor-pointer flex items-center justify-center gap-2 relative ${
+            activeTab === 'comments'
+              ? 'bg-text-primary text-bg font-bold shadow'
+              : 'text-muted hover:text-text-primary'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>{isAr ? 'التعليقات والردود' : 'Comments & Replies'}</span>
+          {unreadCommentsCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white animate-pulse">
+              {unreadCommentsCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'articles' ? (
+        <>
+          {/* Top Action Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl bg-surface border border-stroke shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h2 className="text-xl sm:text-2xl font-display italic text-text-primary">
@@ -302,41 +386,54 @@ export const AdminBlog: React.FC = () => {
               </div>
 
               {/* Bilingual Tab Switcher */}
-              <div className="flex items-center gap-2 p-1.5 bg-bg rounded-2xl border border-stroke mb-6 max-w-md">
+              <div className="flex items-center gap-2 p-1.5 bg-bg rounded-2xl border border-stroke mb-6 max-w-lg">
                 <button
                   type="button"
                   onClick={() => setFormTab('ar')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     formTab === 'ar'
                       ? 'bg-text-primary text-bg font-semibold shadow'
                       : 'text-muted hover:text-text-primary'
                   }`}
                 >
-                  <span>🇸🇦 المحتوى بالعربية</span>
+                  <span>🇸🇦 {isAr ? 'عربي' : 'Arabic'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setFormTab('en')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     formTab === 'en'
                       ? 'bg-text-primary text-bg font-semibold shadow'
                       : 'text-muted hover:text-text-primary'
                   }`}
                 >
-                  <span>🇬🇧 English Content</span>
+                  <span>🇬🇧 English</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormTab('code')}
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                    formTab === 'code'
+                      ? 'bg-text-primary text-bg font-semibold shadow'
+                      : 'text-muted hover:text-text-primary'
+                  }`}
+                >
+                  <Code2 className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'الأكواد' : 'Code'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setFormTab('meta')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     formTab === 'meta'
                       ? 'bg-text-primary text-bg font-semibold shadow'
                       : 'text-muted hover:text-text-primary'
                   }`}
                 >
-                  <span>⚙️ {isAr ? 'الإعدادات والصور' : 'Settings & Image'}</span>
+                  <span>⚙️ {isAr ? 'الإعدادات' : 'Settings'}</span>
                 </button>
               </div>
 
@@ -516,6 +613,132 @@ export const AdminBlog: React.FC = () => {
                         className="w-full bg-bg border border-stroke focus:border-[#89AACC] rounded-2xl px-4 py-2.5 text-xs text-text-primary focus:outline-none"
                       />
                     </div>
+                  </div>
+                )}
+
+                {/* 3. CODE SNIPPETS TAB */}
+                {formTab === 'code' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-stroke">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-text-primary block">
+                          {isAr ? 'الأكواد والمقتطفات البرمجية لهذا المقال' : 'Code Snippets for Article'}
+                        </span>
+                        <span className="text-[11px] text-muted">
+                          {isAr ? 'ستظهر ككتل أكواد منسقة ومظللة بالكامل مع إمكانية النسخ.' : 'Rendered as syntax-highlighted code blocks with direct copy button.'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSnippet: CodeSnippet = {
+                            id: `snip-${Date.now()}`,
+                            language: 'typescript',
+                            title: isAr ? 'مثال كود برمجي' : 'Code Implementation',
+                            code: '// Write your code snippet here\n',
+                            explanationAr: 'شرح موجز لمحتوى الكود...',
+                            explanationEn: 'Brief explanation note...',
+                          };
+                          setEditingArticle({
+                            ...editingArticle,
+                            codeSnippets: [...(editingArticle.codeSnippets || []), newSnippet],
+                          });
+                        }}
+                        className="px-4 py-2 rounded-full bg-bg border border-stroke text-xs font-mono text-[#89AACC] hover:text-white hover:border-[#89AACC] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'إضافة كود جديد' : 'Add Code Snippet'}</span>
+                      </button>
+                    </div>
+
+                    {(!editingArticle.codeSnippets || editingArticle.codeSnippets.length === 0) ? (
+                      <div className="p-8 text-center rounded-2xl bg-bg border border-stroke text-xs text-muted font-mono">
+                        {isAr
+                          ? 'لم تقم بإضافة أي مقتطفات أكواد لهذا المقال بعد. انقر "إضافة كود جديد" لإتاحة تجربة قراءة تفاعلية للمطورين.'
+                          : 'No code snippets added yet. Click "Add Code Snippet" to add interactive developer blocks.'}
+                      </div>
+                    ) : (
+                      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+                        {editingArticle.codeSnippets.map((snip, sIdx) => (
+                          <div key={snip.id} className="p-4 rounded-2xl bg-bg border border-stroke space-y-3 shadow-inner">
+                            <div className="flex items-center justify-between gap-3">
+                              <input
+                                type="text"
+                                value={snip.title || ''}
+                                onChange={(e) => {
+                                  const updatedSnippets = [...(editingArticle.codeSnippets || [])];
+                                  updatedSnippets[sIdx] = { ...snip, title: e.target.value };
+                                  setEditingArticle({ ...editingArticle, codeSnippets: updatedSnippets });
+                                }}
+                                placeholder={isAr ? 'عنوان الملف أو الكود (مثال: lib/services/user.ts)' : 'Code title / file path (e.g. lib/services/user.ts)'}
+                                className="bg-surface border border-stroke focus:border-[#89AACC] rounded-xl px-3 py-1.5 text-xs text-text-primary focus:outline-none flex-grow"
+                              />
+
+                              <select
+                                value={snip.language || 'typescript'}
+                                onChange={(e) => {
+                                  const updatedSnippets = [...(editingArticle.codeSnippets || [])];
+                                  updatedSnippets[sIdx] = { ...snip, language: e.target.value };
+                                  setEditingArticle({ ...editingArticle, codeSnippets: updatedSnippets });
+                                }}
+                                className="bg-surface border border-stroke rounded-xl px-3 py-1.5 text-xs text-text-primary font-mono focus:outline-none cursor-pointer"
+                              >
+                                <option value="typescript">TypeScript</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="react">React / JSX</option>
+                                <option value="sql">PostgreSQL / SQL</option>
+                                <option value="python">Python</option>
+                                <option value="bash">Bash / Terminal</option>
+                                <option value="json">JSON Config</option>
+                                <option value="css">CSS / Tailwind</option>
+                                <option value="html">HTML5</option>
+                              </select>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedSnippets = editingArticle.codeSnippets?.filter((_, i) => i !== sIdx);
+                                  setEditingArticle({ ...editingArticle, codeSnippets: updatedSnippets });
+                                }}
+                                className="p-1.5 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                                title={isAr ? 'حذف هذا الكود' : 'Remove Snippet'}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            <textarea
+                              rows={5}
+                              value={snip.code || ''}
+                              onChange={(e) => {
+                                const updatedSnippets = [...(editingArticle.codeSnippets || [])];
+                                updatedSnippets[sIdx] = { ...snip, code: e.target.value };
+                                setEditingArticle({ ...editingArticle, codeSnippets: updatedSnippets });
+                              }}
+                              placeholder="// Write or paste source code here..."
+                              className="w-full bg-[#080C14] border border-stroke/80 rounded-xl p-3 text-xs font-mono text-emerald-400 focus:outline-none leading-relaxed"
+                            />
+
+                            <input
+                              type="text"
+                              value={isAr ? snip.explanationAr || '' : snip.explanationEn || ''}
+                              onChange={(e) => {
+                                const updatedSnippets = [...(editingArticle.codeSnippets || [])];
+                                if (isAr) {
+                                  updatedSnippets[sIdx] = { ...snip, explanationAr: e.target.value };
+                                } else {
+                                  updatedSnippets[sIdx] = { ...snip, explanationEn: e.target.value };
+                                }
+                                setEditingArticle({ ...editingArticle, codeSnippets: updatedSnippets });
+                              }}
+                              placeholder={isAr ? 'ملاحظة أو شرح خفيف يظهر أسفل المربع (اختياري)...' : 'Brief explanation note below code box (optional)...'}
+                              className="w-full bg-surface border border-stroke rounded-xl px-3 py-1.5 text-xs text-text-primary focus:outline-none"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -717,6 +940,243 @@ export const AdminBlog: React.FC = () => {
           );
         })}
       </div>
+        </>
+      ) : (
+        /* COMMENTS & DISCUSSION MANAGEMENT VIEW */
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="p-6 rounded-3xl bg-surface border border-stroke shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <MessageSquare className="w-5 h-5 text-[#89AACC]" />
+                <h2 className="text-xl sm:text-2xl font-display italic text-text-primary">
+                  {isAr ? 'إدارة تعليقات ومناقشات المدونة' : 'Blog Comments & Reader Discussions'}
+                </h2>
+              </div>
+              <p className="text-xs text-muted">
+                {isAr
+                  ? 'مراجعة تعليقات القراء، الموافقة عليها، والرد المباشر بصفة المطور ليظهر ردك فوراً أسفل المقال.'
+                  : 'Review reader comments, approve discussions, and reply directly as author.'}
+              </p>
+            </div>
+
+            {unreadCommentsCount > 0 && (
+              <div className="px-4 py-2 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono flex items-center gap-2 shrink-0">
+                <Bell className="w-4 h-4 animate-bounce text-rose-400" />
+                <span>
+                  {isAr
+                    ? `لديك ${unreadCommentsCount} تعليق جديد بحاجة لمراجعتك`
+                    : `${unreadCommentsCount} new comment(s) awaiting review`}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Search & Status Filter */}
+          <div className="p-4 rounded-2xl bg-surface border border-stroke flex flex-wrap items-center justify-between gap-3">
+            <div className="relative flex-grow max-w-md">
+              <input
+                type="text"
+                value={commentSearch}
+                onChange={(e) => setCommentSearch(e.target.value)}
+                placeholder={isAr ? 'بحث بالاسم، الإيميل، عنوان المقال، أو نص التعليق...' : 'Search author, email, article title, or comment text...'}
+                className="w-full bg-bg border border-stroke focus:border-[#89AACC] rounded-full px-4 py-2 text-xs text-text-primary placeholder:text-muted/60 focus:outline-none pl-9 rtl:pl-4 rtl:pr-9"
+              />
+              <Search className="w-3.5 h-3.5 text-muted absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            <select
+              value={commentFilterStatus}
+              onChange={(e) => setCommentFilterStatus(e.target.value as any)}
+              className="bg-bg border border-stroke rounded-full px-3.5 py-2 text-xs text-text-primary focus:outline-none cursor-pointer"
+            >
+              <option value="all">{isAr ? 'جميع التعليقات' : 'All Comments'}</option>
+              <option value="approved">{isAr ? 'مقبولة ومستعرضة 🟢' : 'Approved 🟢'}</option>
+              <option value="pending">{isAr ? 'قيد المراجعة 🟡' : 'Pending 🟡'}</option>
+              <option value="rejected">{isAr ? 'مرفوضة 🔴' : 'Rejected 🔴'}</option>
+            </select>
+          </div>
+
+          {/* Comments List */}
+          {filteredComments.length === 0 ? (
+            <div className="p-12 text-center rounded-3xl bg-surface border border-stroke text-muted text-xs font-mono">
+              {isAr ? 'لا توجد تعليقات مطابقة للبحث' : 'No comments match your search filter'}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredComments.map((comment) => {
+                const isReplying = activeReplyId === comment.id;
+
+                return (
+                  <div
+                    key={comment.id}
+                    className="p-5 sm:p-6 rounded-3xl bg-surface border border-stroke hover:border-[#89AACC]/40 transition-all space-y-4 shadow-sm"
+                  >
+                    {/* Header bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stroke/60">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full ${comment.authorAvatarBg || 'bg-[#4E85BF]'} text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-sm`}
+                        >
+                          {comment.authorName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-text-primary">{comment.authorName}</span>
+                            {comment.authorEmail && (
+                              <span className="text-xs text-muted font-mono">({comment.authorEmail})</span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-mono text-[#89AACC] block mt-0.5">
+                            📌 {comment.articleTitle || comment.articleId}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-mono text-muted">{comment.createdAt}</span>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                            comment.status === 'approved'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : comment.status === 'pending'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                          }`}
+                        >
+                          {comment.status === 'approved'
+                            ? (isAr ? 'مقبول 🟢' : 'Approved 🟢')
+                            : comment.status === 'pending'
+                            ? (isAr ? 'معلق 🟡' : 'Pending 🟡')
+                            : (isAr ? 'مرفوض 🔴' : 'Rejected 🔴')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Comment text */}
+                    <p className="text-xs sm:text-sm text-text-primary leading-relaxed font-normal bg-bg/50 p-4 rounded-2xl border border-stroke/60">
+                      "{comment.content}"
+                    </p>
+
+                    {/* Existing Author Reply */}
+                    {comment.reply && (
+                      <div className="p-4 rounded-2xl bg-[#89AACC]/10 border border-[#89AACC]/30 space-y-1">
+                        <div className="flex items-center justify-between text-xs font-mono text-[#89AACC] font-bold">
+                          <span>{isAr ? 'رد المطور الحالي:' : 'Your Saved Reply:'}</span>
+                          <span className="text-[10px] text-muted">{comment.replyDate}</span>
+                        </div>
+                        <p className="text-xs text-text-primary leading-relaxed">{comment.reply}</p>
+                      </div>
+                    )}
+
+                    {/* Active Reply Input Box */}
+                    {isReplying && (
+                      <div className="p-4 rounded-2xl bg-bg border border-[#89AACC]/50 space-y-3">
+                        <label className="block text-xs font-mono font-bold text-[#89AACC]">
+                          {isAr ? 'اكتب ردك المباشر بصفتك مطور المنصة:' : 'Write Author Reply:'}
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder={isAr ? 'أهلاً بك! بالنسبة للاستفسار حول هذا الموضوع...' : 'Type your developer reply...'}
+                          className="w-full bg-surface border border-stroke rounded-xl p-3 text-xs text-text-primary focus:outline-none"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveReplyId(null);
+                              setReplyText('');
+                            }}
+                            className="px-4 py-1.5 rounded-full bg-surface border border-stroke text-xs text-muted hover:text-text-primary transition-colors cursor-pointer"
+                          >
+                            {isAr ? 'إلغاء' : 'Cancel'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSendReply(comment.id)}
+                            className="px-5 py-1.5 rounded-full bg-text-primary text-bg hover:bg-white text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>{isAr ? 'حفظ وإرسال الرد' : 'Save & Publish Reply'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Bar */}
+                    <div className="pt-3 border-t border-stroke/60 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setActiveReplyId(isReplying ? null : comment.id);
+                            setReplyText(comment.reply || '');
+                          }}
+                          className="px-3.5 py-1.5 rounded-full bg-bg hover:bg-stroke/60 text-text-primary border border-stroke font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Send className="w-3 h-3 text-[#89AACC]" />
+                          <span>{comment.reply ? (isAr ? 'تعديل الرد' : 'Edit Reply') : (isAr ? 'رد على التعليق' : 'Reply')}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {comment.status !== 'approved' && (
+                          <button
+                            onClick={() => updateCommentStatus(comment.id, 'approved')}
+                            className="p-1.5 rounded-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer border border-emerald-500/30"
+                            title={isAr ? 'قبول التعليق' : 'Approve Comment'}
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {comment.status !== 'rejected' && (
+                          <button
+                            onClick={() => updateCommentStatus(comment.id, 'rejected')}
+                            className="p-1.5 rounded-full bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer border border-amber-500/30"
+                            title={isAr ? 'رفض التعليق' : 'Reject Comment'}
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => setCommentToDelete(comment)}
+                          className="p-1.5 rounded-full hover:bg-rose-500/10 text-muted hover:text-rose-400 border border-transparent hover:border-rose-500/20 transition-colors cursor-pointer"
+                          title={isAr ? 'حذف التعليق' : 'Delete Comment'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete Comment Modal */}
+      <DeleteConfirmationModal
+        isOpen={Boolean(commentToDelete)}
+        title={isAr ? 'حذف هذا التعليق؟' : 'Delete comment?'}
+        message={
+          isAr
+            ? 'هل أنت متأكد من رغبتك في حذف هذا التعليق نهائياً؟'
+            : 'Are you sure you want to delete this comment permanently?'
+        }
+        itemTitle={commentToDelete?.authorName}
+        onConfirm={() => {
+          if (commentToDelete) {
+            deleteArticleComment(commentToDelete.id);
+            setCommentToDelete(null);
+          }
+        }}
+        onCancel={() => setCommentToDelete(null)}
+      />
 
       {/* Delete Confirmation */}
       <DeleteConfirmationModal

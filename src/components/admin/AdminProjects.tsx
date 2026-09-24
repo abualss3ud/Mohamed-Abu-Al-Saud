@@ -33,7 +33,7 @@ export const AdminProjects: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const [formTab, setFormTab] = useState<'ar' | 'en' | 'meta'>('ar');
+  const [formTab, setFormTab] = useState<'ar' | 'en' | 'gallery' | 'meta'>('ar');
 
   const emptyProject: Project = {
     id: `project-${Date.now()}`,
@@ -332,41 +332,54 @@ export const AdminProjects: React.FC = () => {
               </div>
 
               {/* Bilingual Tab Switcher */}
-              <div className="flex items-center gap-2 p-1.5 bg-bg rounded-2xl border border-stroke mb-6 max-w-md">
+              <div className="flex items-center gap-2 p-1.5 bg-bg rounded-2xl border border-stroke mb-6 max-w-lg">
                 <button
                   type="button"
                   onClick={() => setFormTab('ar')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     formTab === 'ar'
                       ? 'bg-text-primary text-bg font-semibold shadow'
                       : 'text-muted hover:text-text-primary'
                   }`}
                 >
-                  <span>🇸🇦 المحتوى بالعربية</span>
+                  <span>🇸🇦 {isAr ? 'عربي' : 'Arabic'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setFormTab('en')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     formTab === 'en'
                       ? 'bg-text-primary text-bg font-semibold shadow'
                       : 'text-muted hover:text-text-primary'
                   }`}
                 >
-                  <span>🇬🇧 English Content</span>
+                  <span>🇬🇧 English</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFormTab('gallery')}
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                    formTab === 'gallery'
+                      ? 'bg-text-primary text-bg font-semibold shadow'
+                      : 'text-muted hover:text-text-primary'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5 text-[#89AACC]" />
+                  <span>{isAr ? 'لقطات النظام' : 'Screenshots'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setFormTab('meta')}
-                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1 ${
                     formTab === 'meta'
                       ? 'bg-text-primary text-bg font-semibold shadow'
                       : 'text-muted hover:text-text-primary'
                   }`}
                 >
-                  <span>⚙️ {isAr ? 'الروابط والوسائط' : 'Links & Media'}</span>
+                  <span>⚙️ {isAr ? 'الروابط' : 'Links'}</span>
                 </button>
               </div>
 
@@ -581,7 +594,77 @@ export const AdminProjects: React.FC = () => {
                   </div>
                 )}
 
-                {/* 3. TECHNICAL & MEDIA LINKS TAB */}
+                {/* 3. SCREENSHOTS & GALLERY TAB */}
+                {formTab === 'gallery' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-stroke">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-text-primary block">
+                          {isAr ? 'معرض الواجهات ولقطات النظام (System Screenshots & UI Gallery)' : 'System Screenshots & Gallery'}
+                        </span>
+                        <span className="text-[11px] text-muted">
+                          {isAr ? 'إضافة وتعديل لقطات النظام المعروضة في تفاصيل المشروع والمعرض.' : 'Manage screenshots shown in project detail modals and case study showcases.'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newUrl = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=85';
+                          setEditingProject({
+                            ...editingProject,
+                            gallery: [...(editingProject.gallery || []), newUrl],
+                          });
+                        }}
+                        className="px-4 py-2 rounded-full bg-bg border border-stroke text-xs font-mono text-[#89AACC] hover:text-white hover:border-[#89AACC] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'إضافة لقطة شاشة جديدة' : 'Add Screenshot'}</span>
+                      </button>
+                    </div>
+
+                    {(!editingProject.gallery || editingProject.gallery.length === 0) ? (
+                      <div className="p-8 text-center rounded-2xl bg-bg border border-stroke text-xs text-muted font-mono">
+                        {isAr ? 'لا توجد لقطات شاشة بعد لهذا المشروع. انقر "إضافة لقطة شاشة جديدة".' : 'No screenshots added yet. Click "Add Screenshot".'}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-1">
+                        {editingProject.gallery.map((imgUrl, gIdx) => (
+                          <div key={gIdx} className="p-3 rounded-2xl bg-bg border border-stroke space-y-2">
+                            <div className="aspect-[16/10] rounded-xl overflow-hidden bg-black/40 border border-stroke/60 relative group">
+                              <img src={imgUrl} alt={`Screenshot ${gIdx + 1}`} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedGallery = editingProject.gallery.filter((_, i) => i !== gIdx);
+                                  setEditingProject({ ...editingProject, gallery: updatedGallery });
+                                }}
+                                className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                                title={isAr ? 'حذف الصورة' : 'Remove image'}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <input
+                              type="url"
+                              value={imgUrl}
+                              onChange={(e) => {
+                                const updatedGallery = [...editingProject.gallery];
+                                updatedGallery[gIdx] = e.target.value;
+                                setEditingProject({ ...editingProject, gallery: updatedGallery });
+                              }}
+                              placeholder="https://..."
+                              className="w-full bg-surface border border-stroke rounded-xl px-3 py-1.5 text-xs text-text-primary font-mono focus:outline-none"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. TECHNICAL & MEDIA LINKS TAB */}
                 {formTab === 'meta' && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -1,4 +1,4 @@
-import { Project, CaseStudy, Service, Message, Article, Testimonial, MediaItem, SiteSettings, Invoice, PrototypeItem } from '../types';
+import { Project, CaseStudy, Service, Message, Article, Testimonial, MediaItem, SiteSettings, Invoice, PrototypeItem, ArticleComment } from '../types';
 
 export const initialProjects: Project[] = [
   {
@@ -946,4 +946,49 @@ export const initialPrototypes: PrototypeItem[] = [
     updatedAt: '2026-09-24',
   },
 ];
+
+export const initialComments: ArticleComment[] = [
+  {
+    id: 'cmt-1',
+    articleId: 'fullstack-architecture',
+    articleTitle: 'بناء معمارية برمجية قابلة للتوسع باستخدام Next.js و Prisma',
+    authorName: 'م. أحمد خالد',
+    authorEmail: 'ahmed.khaled@example.com',
+    authorAvatarBg: 'bg-[#4E85BF]',
+    content: 'مقال ممتازة جداً! ما رأيك في فصل المعمارية باستخدام Clean Architecture مع Domain Driven Design مقارنة بالطريقة المذكورة هنا؟',
+    createdAt: '2026-09-22',
+    status: 'approved',
+    likes: 8,
+    reply: 'أهلاً مهندس أحمد! بخصوص DDD فهي ممتازة جداً في المشاريع الكبرى ذات النطاق المعقد (Complex Domain Logic)، ولكن في معظم منصات الويب الحديثة تكون الطبقات المعمارية الخفيفة المذكورة هنا أكثر سرعة وفعالية بدون تعقيد إضافي.',
+    replyDate: '2026-09-23',
+    isReadByAdmin: true,
+  },
+  {
+    id: 'cmt-2',
+    articleId: 'fullstack-architecture',
+    articleTitle: 'بناء معمارية برمجية قابلة للتوسع باستخدام Next.js و Prisma',
+    authorName: 'سارة محمود',
+    authorEmail: 'sara.m@example.com',
+    authorAvatarBg: 'bg-purple-600',
+    content: 'شكراً جزيلاً على توضيح نموذج Zod مع Prisma. هل تنصح باستخدام Prisma Accelerate في بيئات الـ Serverless؟',
+    createdAt: '2026-09-24',
+    status: 'pending',
+    likes: 3,
+    isReadByAdmin: false,
+  },
+  {
+    id: 'cmt-3',
+    articleId: 'postgresql-prisma-optimization',
+    articleTitle: 'أفضل ممارسات إدارة قواعد البيانات العلائقية مع PostgreSQL',
+    authorName: 'عمر القاضي',
+    authorEmail: 'omar.q@example.com',
+    authorAvatarBg: 'bg-emerald-600',
+    content: 'طرح رائع! هل تحسين الفهارس (Indexes) يؤثر بشكل ملحوظ على عمليات الكتابة (Write Performance) أم يقتصر على القراءة فقط؟',
+    createdAt: '2026-09-24',
+    status: 'pending',
+    likes: 2,
+    isReadByAdmin: false,
+  },
+];
+
 
