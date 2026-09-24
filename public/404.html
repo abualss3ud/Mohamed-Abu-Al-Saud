@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Abu Al-Saud · Full-Stack Developer</title>
+    <script>
+      // Single Page App redirect for GitHub Pages
+      // Preserves sub-routes on page refreshes and direct URL navigation
+      (function () {
+        var pathSegmentsToKeep = 1;
+        var l = window.location;
+        var repoName = l.pathname.split('/')[1] || '';
+        
+        // If repoName is one of known root routes, pathSegmentsToKeep is 0
+        var knownRoutes = ['admin', 'blog', 'journal', 'projects', 'work', 'services', 'about', 'contact'];
+        if (knownRoutes.indexOf(repoName.toLowerCase()) !== -1) {
+          repoName = '';
+        }
+
+        var redirectUrl = (repoName ? '/' + repoName : '') + '/#' + l.pathname.slice(repoName ? repoName.length + 1 : 0) + l.search;
+        l.replace(redirectUrl);
+      })();
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

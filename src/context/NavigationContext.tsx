@@ -31,8 +31,46 @@ interface NavigationContextType {
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
+const KNOWN_ROUTES = ['admin', 'blog', 'journal', 'projects', 'work', 'services', 'about', 'contact'];
+
+export function getBasePath(): string {
+  if (typeof window === 'undefined') return '';
+  const path = window.location.pathname.replace(/\/+$/, '');
+  const segments = path.split('/').filter(Boolean);
+  
+  if (segments.length === 0) return '';
+  
+  const firstSegment = segments[0].toLowerCase();
+  
+  // If the first segment is not a known route, it is a repository name on GitHub Pages (e.g. /my-repo)
+  if (!KNOWN_ROUTES.includes(firstSegment)) {
+    return '/' + segments[0];
+  }
+  
+  return '';
+}
+
+export function getAppRelativePath(rawPath: string): string {
+  let clean = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+  
+  // Check hash route first if available e.g. #/services or #/projects/foodi
+  if (typeof window !== 'undefined' && window.location.hash) {
+    const hashRoute = window.location.hash.replace(/^#+/, '');
+    if (hashRoute.startsWith('/')) {
+      return hashRoute.replace(/\/+$/, '') || '/';
+    }
+  }
+
+  const basePath = getBasePath();
+  if (basePath && clean.startsWith(basePath.toLowerCase())) {
+    clean = clean.slice(basePath.length) || '/';
+  }
+  
+  return clean || '/';
+}
+
 function normalizePath(rawPath: string, explicitEntityId?: string): NavigationRoute {
-  const clean = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+  const clean = getAppRelativePath(rawPath);
 
   // Admin Routes
   if (clean === '/admin/login') {
@@ -72,9 +110,13 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   });
 
   const navigate = useCallback((targetPath: string, entityId?: string) => {
-    const normalized = normalizePath(targetPath, entityId);
-    if (window.location.pathname !== normalized.path) {
-      window.history.pushState({}, '', normalized.path);
+    const appRelativeTarget = targetPath.startsWith('/') ? targetPath : '/' + targetPath;
+    const normalized = normalizePath(appRelativeTarget, entityId);
+    const basePath = getBasePath();
+    const fullBrowserPath = (basePath ? basePath : '') + normalized.path;
+
+    if (window.location.pathname !== fullBrowserPath) {
+      window.history.pushState({}, '', fullBrowserPath);
     }
     setRoute(normalized);
     window.scrollTo({ top: 0, behavior: 'instant' });

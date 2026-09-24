@@ -121,16 +121,78 @@ function AppContent() {
   );
 }
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#07090E] text-[#F3F4F6] flex flex-col items-center justify-center p-6 text-center font-sans">
+          <div className="w-16 h-16 mb-4 rounded-2xl bg-[#EF4444]/10 border border-[#EF4444]/30 flex items-center justify-center text-[#EF4444] text-2xl font-bold">
+            !
+          </div>
+          <h1 className="text-2xl font-semibold mb-2">Something went wrong / حدث خطأ غير متوقع</h1>
+          <p className="text-sm text-gray-400 max-w-md mb-6">
+            {this.state.error?.message || 'An unexpected error occurred while loading the page.'}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                try {
+                  localStorage.clear();
+                } catch {}
+                window.location.href = window.location.origin + window.location.pathname;
+              }}
+              className="px-5 py-2.5 rounded-xl bg-[#4E85BF] text-white text-sm font-medium hover:bg-[#4E85BF]/80 transition-all shadow-lg shadow-[#4E85BF]/20"
+            >
+              إعادة التحميل وإعادة الضبط / Reload & Reset
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-5 py-2.5 rounded-xl border border-white/15 bg-white/5 text-gray-200 text-sm font-medium hover:bg-white/10 transition-all"
+            >
+              إعادة المحاولة / Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <LanguageProvider>
-      <PortfolioProvider>
-        <AdminAuthProvider>
-          <NavigationProvider>
-            <AppContent />
-          </NavigationProvider>
-        </AdminAuthProvider>
-      </PortfolioProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <PortfolioProvider>
+          <AdminAuthProvider>
+            <NavigationProvider>
+              <AppContent />
+            </NavigationProvider>
+          </AdminAuthProvider>
+        </PortfolioProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }
