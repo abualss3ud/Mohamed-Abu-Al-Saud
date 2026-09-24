@@ -1,0 +1,298 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Montserrat Arabic';
+  src: url('/fonts/Montserrat-Arabic-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Montserrat Arabic';
+  src: url('/fonts/Montserrat-Arabic-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Montserrat Arabic';
+  src: url('/fonts/Montserrat-Arabic-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Montserrat Arabic';
+  src: url('/fonts/Montserrat-Arabic-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg: 0 0% 4%;
+  --surface: 0 0% 8%;
+  --text: 0 0% 96%;
+  --muted: 0 0% 53%;
+  --stroke: 0 0% 12%;
+  --accent: 0 0% 96%;
+}
+
+@theme {
+  --color-bg: hsl(var(--bg));
+  --color-surface: hsl(var(--surface));
+  --color-text-primary: hsl(var(--text));
+  --color-muted: hsl(var(--muted));
+  --color-stroke: hsl(var(--stroke));
+  --color-accent: hsl(var(--accent));
+
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-arabic: 'Montserrat Arabic', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Base forced dark styling */
+html, body {
+  background-color: hsl(var(--bg));
+  color: hsl(var(--text));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Unified typography system for Arabic RTL with Montserrat Arabic */
+html[dir="rtl"], body[dir="rtl"] {
+  font-family: 'Montserrat Arabic', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Custom fonts helper */
+.font-display {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+html[dir="rtl"] .font-display {
+  font-family: 'Montserrat Arabic', 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Avoid unnatural italic slant on Arabic text */
+html[dir="rtl"] .italic {
+  font-style: normal;
+}
+
+/* In Arabic typography, avoid wide letter-spacing which breaks cursive connected letters */
+html[dir="rtl"] [class*="tracking-"] {
+  letter-spacing: 0em;
+}
+
+/* Line height optical balance for Arabic */
+html[dir="rtl"] h1,
+html[dir="rtl"] h2 {
+  line-height: 1.25 !important;
+}
+
+html[dir="rtl"] p,
+html[dir="rtl"] span,
+html[dir="rtl"] button,
+html[dir="rtl"] a {
+  line-height: 1.6;
+}
+
+/* Directional arrow mirror helper */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+  display: inline-block;
+}
+
+html[dir="rtl"] .rtl-arrow-diag {
+  transform: scaleX(-1);
+  display: inline-block;
+}
+
+/* Accent Gradient Utility (Original Blue/Slate Metallic Palette) */
+.accent-gradient {
+  background: linear-gradient(90deg, #89AACC 0%, #4E85BF 100%);
+}
+
+.text-accent-gradient {
+  background: linear-gradient(90deg, #89AACC 0%, #4E85BF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Keyframe Animations */
+@keyframes scroll-down {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+@keyframes role-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-scroll-down {
+  animation: scroll-down 1.5s ease-in-out infinite;
+}
+
+.animate-role-fade-in {
+  animation: role-fade-in 0.35s ease-out forwards;
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+/* Halftone overlay helper */
+.halftone-overlay {
+  background-image: radial-gradient(circle, #000 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Smooth scrollbar matching original dark palette */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--stroke));
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted));
+}
+
+/* =========================================================
+   PRINT STYLES FOR INVOICES & EXPORTS
+   ========================================================= */
+@page {
+  size: A4 portrait;
+  margin: 12mm 15mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide everything on page by default */
+  body > * {
+    display: none !important;
+  }
+
+  /* Show only active modal and printable invoice container */
+  #root,
+  div[class*="fixed"],
+  #printable-invoice-wrapper,
+  #printable-invoice,
+  #printable-invoice * {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Specifically hide modals backdrops, toolbars, buttons, close icons, navbars, and headers */
+  .print\:hidden,
+  button,
+  input,
+  select,
+  nav,
+  header,
+  footer,
+  aside,
+  [role="dialog"] > div:first-child:not(#printable-invoice) {
+    display: none !important;
+  }
+
+  /* Ensure printable invoice is clean, crisp white on paper */
+  #printable-invoice {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+  }
+
+  #printable-invoice table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  #printable-invoice th,
+  #printable-invoice td {
+    color: #111827 !important;
+  }
+
+  #printable-invoice th {
+    border-bottom: 2px solid #374151 !important;
+  }
+
+  #printable-invoice td {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  /* Remove backgrounds on badges in print for crisp ink */
+  #printable-invoice .bg-surface,
+  #printable-invoice .bg-bg {
+    background-color: transparent !important;
+  }
+
+  /* Keep contrast sharp */
+  #printable-invoice .text-muted {
+    color: #4b5563 !important;
+  }
+
+  #printable-invoice .text-text-primary {
+    color: #111827 !important;
+  }
+
+  #printable-invoice img {
+    max-width: 100% !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
